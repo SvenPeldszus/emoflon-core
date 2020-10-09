@@ -79,7 +79,7 @@ public class MultiStatusAwareErrorReporter implements ErrorReporter {
 		final IFile file = getFile();
 		final IResource markedResource = file.exists() ? file : file.getProject();
 		final IMarker validationMarker = markedResource.createMarker(WorkspaceHelper.MOFLON_PROBLEM_MARKER_ID);
-		validationMarker.setAttribute(IMarker.MESSAGE, status.getMessage());
+		validationMarker.setAttribute(IMarker.MESSAGE, status.getException()+ ": " +  status.getMessage());
 		validationMarker.setAttribute(IMarker.PRIORITY, IMarker.PRIORITY_HIGH);
 		validationMarker.setAttribute(IMarker.SEVERITY,
 				convertStatusSeverityToEclipseMarkerSeverity(status.getSeverity()));

@@ -35,6 +35,9 @@ import org.moflon.core.plugins.manifest.ManifestFileUpdater.AttributeUpdatePolic
 import org.moflon.core.plugins.manifest.PluginManifestConstants;
 import org.moflon.core.propertycontainer.MoflonPropertiesContainer;
 import org.moflon.core.propertycontainer.MoflonPropertiesContainerHelper;
+import org.moflon.core.propertycontainer.PropertycontainerFactory;
+import org.moflon.core.propertycontainer.SDMCodeGeneratorIds;
+import org.moflon.core.propertycontainer.SdmCodegeneratorMethodBodyHandler;
 import org.moflon.core.utilities.MoflonConventions;
 import org.moflon.core.utilities.WorkspaceHelper;
 
@@ -183,8 +186,8 @@ public abstract class MoflonProjectCreator extends WorkspaceTask implements Proj
 					"lazy", AttributeUpdatePolicy.KEEP);
 			changed |= ManifestFileUpdater.updateAttribute(manifest,
 					PluginManifestConstants.BUNDLE_EXECUTION_ENVIRONMENT, "JavaSE-1.8", AttributeUpdatePolicy.KEEP);
-			changed |= ManifestFileUpdater.updateAttribute(manifest, PluginManifestConstants.AUTOMATIC_MODULE_NAME,
-					pluginId, AttributeUpdatePolicy.KEEP);
+//			changed |= ManifestFileUpdater.updateAttribute(manifest, PluginManifestConstants.AUTOMATIC_MODULE_NAME,
+//					pluginId, AttributeUpdatePolicy.KEEP);
 			return changed;
 		});
 	}
@@ -346,5 +349,38 @@ public abstract class MoflonProjectCreator extends WorkspaceTask implements Proj
 			}
 		}
 		return buildSpecs;
+	}
+
+	/**
+	 * Returns the method body code generator to use.
+	 *
+	 * @return the code generator ID to use. May be <code>null</code>.
+	 */
+	protected abstract SDMCodeGeneratorIds getCodeGeneratorHandler();
+	
+	/**
+	 * Initializes the contents of the file
+	 * {@link MoflonConventions#MOFLON_CONFIG_FILE}.
+	 *
+	 * The file will be saved after calling this method.
+	 *
+	 * This method initializes
+	 * {@link MoflonPropertiesContainer#getSdmCodegeneratorHandlerId()} based on
+	 * {@link #getCodeGeneratorHandler()}
+	 *
+	 * When overriding this method, subclasses should invoke the parent class's
+	 * {@link #initializeMoflonProperties(MoflonPropertiesContainer)} in any case!
+	 *
+	 * @param moflonProperties
+	 *            the properties container
+	 */
+	protected void initializeMoflonProperties(final MoflonPropertiesContainer moflonProperties) {
+		final SDMCodeGeneratorIds codeGeneratorHandler = getCodeGeneratorHandler();
+		if (codeGeneratorHandler != null) {
+			final SdmCodegeneratorMethodBodyHandler methodBodyHandlerId = PropertycontainerFactory.eINSTANCE
+					.createSdmCodegeneratorMethodBodyHandler();
+			moflonProperties.setSdmCodegeneratorHandlerId(methodBodyHandlerId);
+			methodBodyHandlerId.setValue(codeGeneratorHandler);
+		}
 	}
 }

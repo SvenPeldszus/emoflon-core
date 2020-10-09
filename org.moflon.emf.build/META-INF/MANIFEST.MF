@@ -5,14 +5,17 @@ Bundle-SymbolicName: org.moflon.emf.build;singleton:=true
 Bundle-Version: 1.2.0.qualifier
 Bundle-Vendor: eMoflon developers
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
-Require-Bundle: org.eclipse.core.runtime;bundle-version="3.0.0",
- org.eclipse.core.resources;bundle-version="3.0.0";visibility:=reexport,
- org.emoflon.core.dependencies;bundle-version="1.0.0";visibility:=reexport,
- org.moflon.core.build;bundle-version="1.0.0",
- org.moflon.core.utilities;bundle-version="2.0.0",
- org.moflon.core.plugins;bundle-version="2.2.0",
+Require-Bundle: org.eclipse.core.runtime,
+ org.eclipse.core.resources;visibility:=reexport,
+ org.gervarro.eclipse.task,
+ org.moflon.core.build,
+ org.moflon.core.utilities,
+ org.moflon.core.plugins,
  org.moflon.core.propertycontainer,
  org.moflon.core.preferences,
- org.moflon.emf.codegen
+ org.moflon.emf.codegen,
+ org.gervarro.eclipse.workspace.util,
+ org.moflon.emf.injection.ide,
+ org.moflon.emf.injection.ui
 Export-Package: org.moflon.emf.build
 Automatic-Module-Name: org.moflon.emf.build

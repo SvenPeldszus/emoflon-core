@@ -1,5 +1,6 @@
 package org.moflon.emf.codegen;
 
+import java.util.Collections;
 import java.util.LinkedList;
 
 import org.apache.log4j.Logger;
@@ -16,6 +17,7 @@ import org.eclipse.emf.ecore.resource.Resource;
 import org.eclipse.emf.ecore.resource.ResourceSet;
 import org.eclipse.emf.ecore.xmi.impl.XMIResourceFactoryImpl;
 import org.moflon.core.utilities.MoflonUtil;
+import org.moflon.emf.codegen.dependency.Dependency;
 import org.moflon.emf.codegen.resource.GenModelResource;
 import org.moflon.emf.codegen.resource.GenModelResourceFactory;
 
@@ -52,6 +54,10 @@ public class GenModelBuilder {
 		genModel.setUpdateClasspath(false);
 	}
 
+	public Iterable<Dependency> getGenModelResourceDependencies() {
+		return Collections.emptyList();
+	}
+
 	public void loadDefaultSettings() {
 		resourceSet.getPackageRegistry().put("http://www.eclipse.org/emf/2002/GenModel",
 				new StandalonePackageDescriptor("org.eclipse.emf.codegen.ecore.genmodel.GenModelPackage"));
@@ -77,6 +83,13 @@ public class GenModelBuilder {
 			adjustRegistry(genModel);
 
 			loadDefaultGenModelContent(genModel);
+
+			// Handle GenModel dependencies
+			for (Dependency dependency : getGenModelResourceDependencies()) {
+				Resource dependentGenModelResource = dependency.getResource(resourceSet, true);
+				GenModel dependentGenModel = (GenModel) dependentGenModelResource.getContents().get(0);
+				genModel.getUsedGenPackages().addAll(dependentGenModel.getGenPackages());
+			}
 
 			// Use Ecore model to create new GenModel
 			final URI ecoreURI = getEcoreURI(genModelURI);

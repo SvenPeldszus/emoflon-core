@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
+import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
@@ -18,6 +19,9 @@ import org.moflon.core.build.CrossReferenceResolver;
 import org.moflon.core.utilities.MoflonConventions;
 import org.moflon.core.utilities.WorkspaceHelper;
 import org.moflon.core.utilities.eMoflonEMFUtil;
+import org.moflon.emf.codegen.MoflonGenModelBuilder;
+import org.moflon.emf.codegen.dependency.PackageRemappingDependency;
+import org.moflon.emf.codegen.dependency.SimpleDependency;
 
 /**
  * Generic resource-loading process
@@ -40,10 +44,8 @@ public class GenericMonitoredResourceLoader implements ITask {
 	 * Initializes this loader with the target {@link ResourceSet} and the file from
 	 * where the {@link Resource} should be loaded
 	 * 
-	 * @param resourceSet
-	 *                        the target {@link ResourceSet}
-	 * @param file
-	 *                        the file to be loaded
+	 * @param resourceSet the target {@link ResourceSet}
+	 * @param file        the file to be loaded
 	 */
 	public GenericMonitoredResourceLoader(final ResourceSet resourceSet, final IFile file) {
 		this.resourceSet = resourceSet;
@@ -62,8 +64,7 @@ public class GenericMonitoredResourceLoader implements ITask {
 	 * Performs the following steps (i) preprocessing, (ii) load resource from
 	 * {@link #getFile()}, (iii) postprocessing
 	 * 
-	 * @param monitor
-	 *                    the progress monitor
+	 * @param monitor the progress monitor
 	 * @return the success status
 	 */
 	@Override
@@ -144,8 +145,7 @@ public class GenericMonitoredResourceLoader implements ITask {
 	/**
 	 * This method is invoked before trying to load the actual resource
 	 * 
-	 * @param monitor
-	 *                    the progress monitor
+	 * @param monitor the progress monitor
 	 * @return the preprocessing status
 	 */
 	protected IStatus preprocessResourceSet(final IProgressMonitor monitor) {
@@ -159,10 +159,10 @@ public class GenericMonitoredResourceLoader implements ITask {
 
 			// Create (unloaded) resources for all possibly dependent metamodels in
 			// workspace projects
-			// createResourcesForWorkspaceProjects(subMon.split(10));
-			// if (subMon.isCanceled()) {
-			// return Status.CANCEL_STATUS;
-			// }
+			createResourcesForWorkspaceProjects(subMon.split(10));
+			if (subMon.isCanceled()) {
+				return Status.CANCEL_STATUS;
+			}
 
 			return Status.OK_STATUS;
 		} catch (final CoreException e) {
@@ -173,8 +173,7 @@ public class GenericMonitoredResourceLoader implements ITask {
 	/**
 	 * This method is invoked after loading the actual resource
 	 * 
-	 * @param monitor
-	 *                    the progress monitor
+	 * @param monitor the progress monitor
 	 * @return the postprocessing status
 	 */
 	protected IStatus postprocessResourceSet(final IProgressMonitor monitor) {
@@ -196,11 +195,44 @@ public class GenericMonitoredResourceLoader implements ITask {
 	}
 
 	/**
+	 * Creates a resource for each project in the workspace that fulfills
+	 * {@link #isValidProject(IProject)}
+	 * 
+	 * @param monitor the progress monitor
+	 */
+	protected void createResourcesForWorkspaceProjects(final IProgressMonitor monitor) {
+		final IProject[] workspaceProjects = ResourcesPlugin.getWorkspace().getRoot().getProjects();
+		final SubMonitor subMon = SubMonitor.convert(monitor, "Loading workspace projects", workspaceProjects.length);
+		for (final IProject workspaceProject : workspaceProjects) {
+			if (isValidProject(workspaceProject)) {
+				loadProjectRelatedDependency(workspaceProject);
+			}
+			subMon.worked(1);
+		}
+	}
+
+	/**
+	 * Loads the Ecore metamodel of the given project. Precondition: the project
+	 * fulfills {@link #isValidProject(IProject)}
+	 * 
+	 * @param project the project to read the Ecore file from
+	 */
+	private void loadProjectRelatedDependency(final IProject project) {
+		final URI projectURI = MoflonGenModelBuilder.determineProjectUriBasedOnPreferences(project);
+		final URI metamodelURI = MoflonConventions.getDefaultProjectRelativeEcoreFileURI(project).resolve(projectURI);
+		final PackageRemappingDependency dependency = new PackageRemappingDependency(metamodelURI,
+				!PackageRemappingDependency.HANDLE_GENERATED_EPACKAGE_URIS,
+				!PackageRemappingDependency.USE_GENERATED_EPACKAGE_RESOURCE);
+		dependency.getResource(this.resourceSet, //
+				!SimpleDependency.LOAD_CONTENT, //
+				SimpleDependency.FORCE_PREEMPTIVE_CREATE);
+	}
+
+	/**
 	 * Returns true if the given project can be handled by the
 	 * {@link GenericMonitoredResourceLoader}
 	 * 
-	 * @param project
-	 *                    the project to check
+	 * @param project the project to check
 	 * @return true iff the project can be handled
 	 */
 	protected boolean isValidProject(final IProject project) {

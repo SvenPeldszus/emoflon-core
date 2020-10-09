@@ -23,6 +23,7 @@ import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.NullProgressMonitor;
+import org.eclipse.e4.ui.internal.workspace.markers.Translation;
 import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.osgi.util.NLS;
 import org.eclipse.swt.SWT;
@@ -51,6 +52,8 @@ import org.eclipse.ui.views.markers.internal.Util;
  */
 @SuppressWarnings("restriction")
 public class EMoflonPropertyPage extends MarkersPropertyPage {
+
+	private final Translation translation = new Translation();
 
 	private Text descriptionText;
 	private IMarker marker;
@@ -253,7 +256,7 @@ public class EMoflonPropertyPage extends MarkersPropertyPage {
 		Text resourceText = new Text(parent, SWT.SINGLE | SWT.WRAP | SWT.READ_ONLY | SWT.BORDER);
 		GridData gridData = new GridData(GridData.FILL_HORIZONTAL);
 		resourceText.setLayoutData(gridData);
-		resourceText.setText(Util.getResourceName(marker));
+		resourceText.setText(translation.name(marker).orElse(""));
 
 		Label folderLabel = new Label(parent, SWT.NONE);
 		folderLabel.setText(MarkerMessages.propertiesDialog_folder_text);
@@ -324,7 +327,7 @@ public class EMoflonPropertyPage extends MarkersPropertyPage {
 
 		IUndoableOperation op = new UpdateMarkersOperation(marker, attrs,
 				NLS.bind(MarkerMessages.qualifiedMarkerCommand_title,
-						new Object[] { MarkerMessages.DialogMarkerProperties_Modify, Util.getResourceName(marker) }),
+						new Object[] { MarkerMessages.DialogMarkerProperties_Modify, translation.name(marker).orElse("") }),
 				true);
 
 		try {

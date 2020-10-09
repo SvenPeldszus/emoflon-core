@@ -9,9 +9,41 @@ import java.util.Map;
  * @author Roland Kluge - Initial implementation
  */
 public class EMoflonPreferencesStorage {
+	
+	/**
+	 * Indicates unbounded adornment size for {@link #getMaximumAdornmentSize()}
+	 */
+	public static final int REACHABILITY_MAX_ADORNMENT_SIZE_INFINITY = 0;
+
+	/**
+	 * Default value for {@link #getMaximumAdornmentSize()}
+	 */
+	public static final int DEFAULT_REACHABILITY_MAX_ADORNMENT_SIZE = REACHABILITY_MAX_ADORNMENT_SIZE_INFINITY;
+
+	/**
+	 * Default value for {@link #getValidationTimeout()}
+	 */
+	public static final int DEFAULT_VALIDATION_TIMEOUT_MILLIS = 30000;
+
+	/**
+	 * Default value for {@link #getReachabilityEnabled()}
+	 */
+	public static final boolean DEFAULT_REACHABILITIY_IS_ENABLED = true;
 
 	private final Map<String, Object> data = new HashMap<>();
 
+	public static final String KEY_REACHABILITY_MAX_ADORNMENT_SIZE = "org.moflon.ide.ui.preferences.ReachabilityMaxAdornmentSize";
+
+	public static final String KEY_REACHABILITY_ENABLED = "org.moflon.ide.ui.preferences.ReachabilityEnabled";
+
+	public static final String KEY_VALIDATION_TIMEOUT = "org.moflon.ide.ui.preferences.ValidationTimeoutMillis";
+
+	public EMoflonPreferencesStorage() {
+		data.put(KEY_REACHABILITY_ENABLED, DEFAULT_REACHABILITIY_IS_ENABLED);
+		data.put(KEY_REACHABILITY_MAX_ADORNMENT_SIZE, DEFAULT_REACHABILITY_MAX_ADORNMENT_SIZE);
+		data.put(KEY_VALIDATION_TIMEOUT, DEFAULT_VALIDATION_TIMEOUT_MILLIS);
+	}
+	
 	/**
 	 * Stores a key-value pair
 	 * 
