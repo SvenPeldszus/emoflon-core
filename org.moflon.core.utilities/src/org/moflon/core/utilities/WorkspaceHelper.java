@@ -12,7 +12,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
-import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
 import org.eclipse.core.resources.IFile;
@@ -49,7 +48,7 @@ public class WorkspaceHelper {
 	 * resources serialized by eMoflon should have consistent line endings.
 	 *
 	 * The following code snippet shows how to use this option:
-	 * 
+	 *
 	 * <pre>
 	 * Resource resource = ...;
 	 * HashMap<String, String> saveOptions = new HashMap<String, String>();
@@ -141,15 +140,12 @@ public class WorkspaceHelper {
 	 */
 	public static void addFile(final IProject project, final String fileName, final URL pathToContent,
 			final String pluginID, final IProgressMonitor monitor)
-			throws CoreException, URISyntaxException, IOException {
+					throws CoreException, URISyntaxException, IOException {
 		final SubMonitor subMon = SubMonitor.convert(monitor, "", 1);
 
 		final IFile projectFile = project.getFile(fileName);
-		final InputStream contents = pathToContent.openStream();
-		try {
+		try (final InputStream contents = pathToContent.openStream()) {
 			projectFile.create(contents, true, subMon.split(1));
-		} finally {
-			IOUtils.closeQuietly(contents);
 		}
 	}
 
@@ -173,8 +169,8 @@ public class WorkspaceHelper {
 	public static void addFile(final IProject project, final String fileName, final String contents,
 			final IProgressMonitor monitor) throws CoreException {
 		final SubMonitor subMon = SubMonitor.convert(monitor, "", 1);
-		IFile projectFile = project.getFile(fileName);
-		ByteArrayInputStream source = new ByteArrayInputStream(contents.getBytes());
+		final IFile projectFile = project.getFile(fileName);
+		final ByteArrayInputStream source = new ByteArrayInputStream(contents.getBytes());
 		if (projectFile.exists()) {
 			projectFile.setContents(source, true, true, subMon.split(1));
 		} else {
@@ -198,7 +194,7 @@ public class WorkspaceHelper {
 		final SubMonitor subMon = SubMonitor.convert(monitor, "Add file", 1);
 		final ByteArrayInputStream source = new ByteArrayInputStream(contents.getBytes());
 		if (file.exists()) {
-			file.setContents(source, IFile.FORCE | IFile.KEEP_HISTORY, subMon.split(1));
+			file.setContents(source, IResource.FORCE | IResource.KEEP_HISTORY, subMon.split(1));
 		} else {
 			file.create(source, true, subMon.split(1));
 		}
@@ -222,10 +218,10 @@ public class WorkspaceHelper {
 			final IFile keepFile = folder.getFile(filename);
 			if (!keepFile.exists()) {
 				keepFile.create(
-						new ByteArrayInputStream(new String("Dummy file to protect empty folder in Git.\n").getBytes()),
+						new ByteArrayInputStream("Dummy file to protect empty folder in Git.\n".getBytes()),
 						true, subMon.split(1));
 			}
-		} catch (CoreException e) {
+		} catch (final CoreException e) {
 			LogUtils.warn(logger, "Error during creation of file %s in folder %s .", filename, folder);
 		}
 	}
@@ -272,8 +268,9 @@ public class WorkspaceHelper {
 		final SubMonitor subMon = SubMonitor.convert(monitor, "", 1);
 
 		final IFolder projFolder = project.getFolder(folderName);
-		if (!projFolder.exists())
+		if (!projFolder.exists()) {
 			projFolder.create(true, true, subMon.split(1));
+		}
 		return projFolder;
 	}
 
@@ -290,8 +287,8 @@ public class WorkspaceHelper {
 			throws CoreException {
 		final String[] folders = path.split(PATH_SEPARATOR);
 		final SubMonitor subMon = SubMonitor.convert(monitor, "Add folders", folders.length);
-		StringBuilder currentFolder = new StringBuilder();
-		for (String folder : folders) {
+		final StringBuilder currentFolder = new StringBuilder();
+		for (final String folder : folders) {
 			currentFolder.append(PATH_SEPARATOR).append(folder);
 			addFolder(project, currentFolder.toString(), subMon.split(1));
 		}
@@ -309,7 +306,7 @@ public class WorkspaceHelper {
 	 *
 	 * @see WorkspaceHelper#BIN_FOLDER
 	 */
-	public static IFolder getBinFolder(IProject project) {
+	public static IFolder getBinFolder(final IProject project) {
 		return project.getFolder(BIN_FOLDER);
 	}
 
@@ -318,7 +315,7 @@ public class WorkspaceHelper {
 	 *
 	 * @see WorkspaceHelper#SOURCE_FOLDER
 	 */
-	public static IFolder getSourceFolder(IProject project) {
+	public static IFolder getSourceFolder(final IProject project) {
 		return project.getFolder(SOURCE_FOLDER);
 	}
 
@@ -381,8 +378,9 @@ public class WorkspaceHelper {
 		final SubMonitor subMon = SubMonitor.convert(monitor, "Creating " + folder, segmentCount);
 		for (int i = segmentCount - 1; i >= 0; --i) {
 			final IFolder subFolder = folder.getProject().getFolder(projectRelativePath.removeLastSegments(i));
-			if (!subFolder.exists())
+			if (!subFolder.exists()) {
 				subFolder.create(true, true, subMon.split(1));
+			}
 		}
 	}
 
@@ -424,14 +422,14 @@ public class WorkspaceHelper {
 			throws CoreException {
 		final SubMonitor subMon = SubMonitor.convert(monitor, "Add nature to project", 2);
 
-		IProjectDescription description = getDescriptionWithAddedNature(project, natureId, subMon.split(1));
+		final IProjectDescription description = getDescriptionWithAddedNature(project, natureId, subMon.split(1));
 		project.setDescription(description, subMon.split(1));
 	}
 
 	/**
 	 * Adds the nature as first one to the given project if the project does not
 	 * have the nature yet.
-	 * 
+	 *
 	 * @param project
 	 *            the project
 	 * @param natureId
@@ -502,12 +500,12 @@ public class WorkspaceHelper {
 	 * @return true if the given resource is an {@link IFile}
 	 */
 	public static boolean isFile(final IResource resource) {
-		return resource != null && resource.getType() == IResource.FILE;
+		return (resource != null) && (resource.getType() == IResource.FILE);
 	}
 
 	/**
 	 * Returns whether the given {@link IResource} appears to be an Ecore file
-	 * 
+	 *
 	 * @param file
 	 *            the file to check
 	 * @return true if the file is an Ecore
@@ -515,14 +513,14 @@ public class WorkspaceHelper {
 	public static boolean isEcoreFile(final IResource resource) {
 		return isFile(resource) && resource.getName().endsWith(".ecore");
 	}
-	
+
 	public static boolean isXcoreFile(final IResource resource) {
 		return isFile(resource) && resource.getName().endsWith(".xcore");
 	}
 
 	/**
 	 * Returns the {@link IProject} with the given name (if exists)
-	 * 
+	 *
 	 * @param projectName
 	 *            the name of the project
 	 * @return the project or <code>null</code>
@@ -533,7 +531,7 @@ public class WorkspaceHelper {
 
 	/**
 	 * Returns true if the given {@link IProject} has the given nature ID
-	 * 
+	 *
 	 * @param project
 	 *            the project
 	 * @param natureId
@@ -558,14 +556,12 @@ public class WorkspaceHelper {
 	 * @return the project with the plugin id or null if not such project exists
 	 */
 	public static IProject getProjectByPluginId(final String pluginId) {
-		return getAllProjectsInWorkspace().stream().filter(project -> {
-			return hasPluginId(project, pluginId);
-		}).findAny().orElse(null);
+		return getAllProjectsInWorkspace().stream().filter(project -> hasPluginId(project, pluginId)).findAny().orElse(null);
 	}
 
 	private static boolean hasPluginId(final IProject project, final String desiredPluginId) {
 		final IPluginModelBase pluginModel = PluginRegistry.findModel(project);
-		if (pluginModel != null && pluginModel.getBundleDescription() != null) {
+		if ((pluginModel != null) && (pluginModel.getBundleDescription() != null)) {
 			final String actualPluginId = pluginModel.getBundleDescription().getSymbolicName();
 			return desiredPluginId.equals(actualPluginId);
 		} else {
@@ -629,8 +625,9 @@ public class WorkspaceHelper {
 	 * If t is null, then the result is 'null'.
 	 */
 	public static String printStacktraceToString(final Throwable throwable) {
-		if (null == throwable)
+		if (null == throwable) {
 			return "null";
+		}
 
 		final ByteArrayOutputStream stream = new ByteArrayOutputStream();
 		throwable.printStackTrace(new PrintStream(stream));
@@ -640,7 +637,7 @@ public class WorkspaceHelper {
 	/**
 	 * Returns the symbolic name (aka. plugin ID) of the bundle containing the given
 	 * class.
-	 * 
+	 *
 	 * @param clazz
 	 *            the class whose bundle is searched
 	 * @return the symbolic name or null if the class does not belong to a bundle
@@ -654,7 +651,7 @@ public class WorkspaceHelper {
 	 * Returns a string that represents the severity of the given status object
 	 *
 	 * The code of this method has been extracted from {@link Status#toString()}.
-	 * 
+	 *
 	 * @param status
 	 *            the status
 	 * @return the severity (as string)
@@ -662,17 +659,18 @@ public class WorkspaceHelper {
 	 */
 	public static String getSeverityAsString(final IStatus status) {
 		final int severity = status.getSeverity();
-		if (severity == IStatus.OK) {
+		switch (severity) {
+		case IStatus.OK:
 			return "OK";
-		} else if (severity == IStatus.ERROR) {
+		case IStatus.ERROR:
 			return "ERROR";
-		} else if (severity == IStatus.WARNING) {
+		case IStatus.WARNING:
 			return "WARNING";
-		} else if (severity == IStatus.INFO) {
+		case IStatus.INFO:
 			return "INFO";
-		} else if (severity == IStatus.CANCEL) {
+		case IStatus.CANCEL:
 			return "CANCEL";
-		} else {
+		default:
 			return "severity=" + severity;
 		}
 	}
@@ -692,8 +690,9 @@ public class WorkspaceHelper {
 	public static URL getPathRelToPlugIn(final String filePath, final String pluginId) {
 		try {
 			final Bundle bundle = Platform.getBundle(pluginId);
-			if (bundle == null)
+			if (bundle == null) {
 				return null;
+			}
 			return FileLocator.resolve(bundle.getEntry(filePath));
 		} catch (final Exception e) {
 			return null;

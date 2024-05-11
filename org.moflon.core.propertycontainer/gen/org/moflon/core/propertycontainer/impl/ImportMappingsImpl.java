@@ -3,11 +3,8 @@
 package org.moflon.core.propertycontainer.impl;
 
 import org.eclipse.emf.common.notify.Notification;
-
 import org.eclipse.emf.ecore.EClass;
-
 import org.eclipse.emf.ecore.impl.ENotificationImpl;
-
 import org.moflon.core.propertycontainer.ImportMappings;
 import org.moflon.core.propertycontainer.PropertycontainerPackage;
 

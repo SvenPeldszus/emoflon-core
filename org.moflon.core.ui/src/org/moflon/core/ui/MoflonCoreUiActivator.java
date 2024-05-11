@@ -1,10 +1,11 @@
 package org.moflon.core.ui;
 
 import java.io.File;
+import java.io.FileOutputStream;
+import java.io.OutputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 
-import org.apache.commons.io.FileUtils;
 import org.apache.log4j.Logger;
 import org.apache.log4j.PropertyConfigurator;
 import org.eclipse.core.runtime.IPath;
@@ -51,9 +52,10 @@ public class MoflonCoreUiActivator extends AbstractUIPlugin {
 	 * @return
 	 */
 	public static MoflonCoreUiActivator getDefault() {
-		if (plugin == null)
+		if (plugin == null) {
 			throw new IllegalStateException(
 					String.format("Singleton of class %s not initialized yet.", MoflonCoreUiActivator.class.getName()));
+		}
 
 		return plugin;
 	}
@@ -65,17 +67,17 @@ public class MoflonCoreUiActivator extends AbstractUIPlugin {
 	 */
 	private void setUpLogging() {
 		// Create configFile if necessary also in plugin storage space
-		loggingConfigurationFile = getPathInStateLocation(LOG4J_CONFIG_PROPERTIES).toFile();
+		this.loggingConfigurationFile = getPathInStateLocation(LOG4J_CONFIG_PROPERTIES).toFile();
 
-		if (!loggingConfigurationFile.exists()) {
-			try {
-				// Copy default configuration to state location
-				URL defaultConfigFile = WorkspaceHelper.getPathRelToPlugIn(
-						RESOURCES_DEFAULT_FILES_PATH + LOG4J_CONFIG_PROPERTIES,
-						WorkspaceHelper.getPluginId(getClass()));
-
-				FileUtils.copyURLToFile(defaultConfigFile, loggingConfigurationFile);
-			} catch (Exception e) {
+		if (!this.loggingConfigurationFile.exists()) {
+			// Copy default configuration to state location
+			final var defaultConfigFile = WorkspaceHelper.getPathRelToPlugIn(
+					RESOURCES_DEFAULT_FILES_PATH + LOG4J_CONFIG_PROPERTIES,
+					WorkspaceHelper.getPluginId(getClass()));
+			try (final var in =  defaultConfigFile.openStream();
+					OutputStream out = new FileOutputStream(this.loggingConfigurationFile)){
+				in.transferTo(out);
+			} catch (final Exception e) {
 				LogUtils.error(logger, e, "Unable to open default config file.");
 			}
 		}
@@ -91,9 +93,9 @@ public class MoflonCoreUiActivator extends AbstractUIPlugin {
 	 */
 	public void reconfigureLogging() {
 		try {
-			configureLogging(loggingConfigurationFile.toURI().toURL());
-		} catch (MalformedURLException e) {
-			LogUtils.error(logger, e, "URL to configFile is malformed: " + loggingConfigurationFile);
+			configureLogging(this.loggingConfigurationFile.toURI().toURL());
+		} catch (final MalformedURLException e) {
+			LogUtils.error(logger, e, "URL to configFile is malformed: " + this.loggingConfigurationFile);
 		}
 	}
 
@@ -105,8 +107,8 @@ public class MoflonCoreUiActivator extends AbstractUIPlugin {
 	 */
 	public static boolean configureLogging(final URL configFile) {
 		try {
-			Logger root = Logger.getRootLogger();
-			String configurationStatus = "";
+			final var root = Logger.getRootLogger();
+			var configurationStatus = "";
 			if (configFile != null) {
 				// Configure system using config
 				PropertyConfigurator.configure(configFile);
@@ -121,7 +123,7 @@ public class MoflonCoreUiActivator extends AbstractUIPlugin {
 			// Indicate success
 			root.info("Logging to eMoflon console. Configuration: " + configurationStatus);
 			return true;
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			LogUtils.error(logger, e);
 			return false;
 		}
@@ -132,7 +134,7 @@ public class MoflonCoreUiActivator extends AbstractUIPlugin {
 	 *         $workspace/.metadata/.plugins/org.moflon.ide.core/log4jConfig.properties)
 	 */
 	public File getConfigFile() {
-		return loggingConfigurationFile;
+		return this.loggingConfigurationFile;
 	}
 
 	/**

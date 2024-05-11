@@ -4,10 +4,19 @@ package org.moflon.core.propertycontainer.util;
 
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.EPackage;
-
 import org.eclipse.emf.ecore.util.Switch;
-
-import org.moflon.core.propertycontainer.*;
+import org.moflon.core.propertycontainer.AdditionalDependencies;
+import org.moflon.core.propertycontainer.AdditionalUsedGenPackages;
+import org.moflon.core.propertycontainer.Dependencies;
+import org.moflon.core.propertycontainer.FactoryMappings;
+import org.moflon.core.propertycontainer.ImportMappings;
+import org.moflon.core.propertycontainer.MetaModelProject;
+import org.moflon.core.propertycontainer.MoflonPropertiesContainer;
+import org.moflon.core.propertycontainer.PropertiesMapping;
+import org.moflon.core.propertycontainer.PropertiesValue;
+import org.moflon.core.propertycontainer.PropertycontainerPackage;
+import org.moflon.core.propertycontainer.ReplaceGenModel;
+import org.moflon.core.propertycontainer.TGGBuildMode;
 
 /**
  * <!-- begin-user-doc -->

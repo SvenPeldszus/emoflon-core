@@ -15,6 +15,7 @@ import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.SubMonitor;
+import org.eclipse.emf.codegen.ecore.generator.GeneratorAdapterFactory.Descriptor;
 import org.eclipse.emf.codegen.ecore.genmodel.GenModel;
 import org.eclipse.emf.codegen.ecore.genmodel.GenPackage;
 import org.eclipse.emf.common.util.BasicMonitor;
@@ -26,11 +27,10 @@ import org.eclipse.emf.ecore.resource.ResourceSet;
 import org.moflon.core.preferences.EMoflonPreferencesStorage;
 import org.moflon.core.utilities.LogUtils;
 import org.moflon.core.utilities.WorkspaceHelper;
-import org.eclipse.emf.codegen.ecore.generator.GeneratorAdapterFactory.Descriptor;
-import org.moflon.emf.injection.build.CodeInjectorImpl;
-import org.moflon.emf.injection.build.XTextInjectionExtractor;
 import org.moflon.emf.codegen.CodeGenerator;
 import org.moflon.emf.codegen.InjectionAwareGeneratorAdapterFactory;
+import org.moflon.emf.injection.build.CodeInjectorImpl;
+import org.moflon.emf.injection.build.XTextInjectionExtractor;
 import org.moflon.emf.injection.ide.CodeInjector;
 import org.moflon.emf.injection.ide.InjectionExtractor;
 import org.moflon.emf.injection.ide.InjectionManager;
@@ -66,26 +66,31 @@ public class MoflonEmfCodeGenerator extends GenericMoflonProcess {
 			final MonitoredGenModelBuilder genModelBuilderJob = new MonitoredGenModelBuilder(getResourceSet(),
 					getAllResources(), getEcoreFile(), true, getMoflonProperties());
 			final IStatus genModelBuilderStatus = genModelBuilderJob.run(subMon.split(15));
-			if (subMon.isCanceled())
+			if (subMon.isCanceled()) {
 				return Status.CANCEL_STATUS;
-			if (genModelBuilderStatus.matches(IStatus.ERROR))
+			}
+			if (genModelBuilderStatus.matches(IStatus.ERROR)) {
 				return genModelBuilderStatus;
-			this.setGenModel(genModelBuilderJob.getGenModel());
-			if (subMon.isCanceled())
+			}
+			setGenModel(genModelBuilderJob.getGenModel());
+			if (subMon.isCanceled()) {
 				return Status.CANCEL_STATUS;
+			}
 			subMon.worked(5);
 
 			final IStatus inheritanceCheckStatus = checkForCyclicInheritance();
-			if (subMon.isCanceled())
+			if (subMon.isCanceled()) {
 				return Status.CANCEL_STATUS;
-			if (inheritanceCheckStatus.matches(IStatus.ERROR))
+			}
+			if (inheritanceCheckStatus.matches(IStatus.ERROR)) {
 				return inheritanceCheckStatus;
+			}
 
 			// Load injections
 			final IProject project = getEcoreFile().getProject();
 
 			final InjectionManager injectionManager = createInjectionManager(project);
-			this.setInjectorManager(injectionManager);
+			setInjectorManager(injectionManager);
 			final IStatus injectionStatus = createInjections(project);
 			if (subMon.isCanceled()) {
 				return Status.CANCEL_STATUS;
@@ -98,7 +103,7 @@ public class MoflonEmfCodeGenerator extends GenericMoflonProcess {
 			subMon.subTask("Generating code for project " + getProjectName());
 			final Descriptor codeGenerationEngine = new InjectionAwareGeneratorAdapterFactory(injectionManager);
 			final CodeGenerator codeGenerator = new CodeGenerator(codeGenerationEngine);
-			final IStatus codeGenerationStatus = codeGenerator.generateCode(genModel,
+			final IStatus codeGenerationStatus = codeGenerator.generateCode(this.genModel,
 					new BasicMonitor.EclipseSubProgress(subMon, 30));
 			if (subMon.isCanceled()) {
 				return Status.CANCEL_STATUS;
@@ -121,23 +126,23 @@ public class MoflonEmfCodeGenerator extends GenericMoflonProcess {
 	/**
 	 * Checks whether a {@link EClass} in any of the {@link GenPackage}s of the
 	 * {@link GenModel} has a cyclic inheritance hierarchy
-	 * 
+	 *
 	 * @return {@link IStatus} with {@link IStatus#ERROR} if a cycle exists
 	 */
 	private IStatus checkForCyclicInheritance() {
 		final List<EClass> eClassifiersWithCyclicInheritance = new ArrayList<>();
-		genModel.getGenPackages().stream()//
-				.flatMap(genPackage -> genPackage.getGenClassifiers().stream()).forEach(genClassifier -> {
-					final EClassifier eClassifier = genClassifier.getEcoreClassifier();
-					if (eClassifier instanceof EClass) {
-						final EClass eClass = (EClass) eClassifier;
-						final EList<EGenericType> superTypes = eClass.getEAllGenericSuperTypes();
-						if (superTypes.stream().map(EGenericType::getEClassifier)
-								.anyMatch(superType -> eClass.equals(superType))) {
-							eClassifiersWithCyclicInheritance.add(eClass);
-						}
-					}
-				});
+		this.genModel.getGenPackages().stream()//
+		.flatMap(genPackage -> genPackage.getGenClassifiers().stream()).forEach(genClassifier -> {
+			final EClassifier eClassifier = genClassifier.getEcoreClassifier();
+			if (eClassifier instanceof EClass) {
+				final EClass eClass = (EClass) eClassifier;
+				final EList<EGenericType> superTypes = eClass.getEAllGenericSuperTypes();
+				if (superTypes.stream().map(EGenericType::getEClassifier)
+						.anyMatch(superType -> eClass.equals(superType))) {
+					eClassifiersWithCyclicInheritance.add(eClass);
+				}
+			}
+		});
 
 		if (!eClassifiersWithCyclicInheritance.isEmpty()) {
 			final String pluralSuffix = eClassifiersWithCyclicInheritance.size() > 1 ? "es" : "";
@@ -151,7 +156,7 @@ public class MoflonEmfCodeGenerator extends GenericMoflonProcess {
 
 	/**
 	 * Configures the {@link GenModel} to be used during code generation
-	 * 
+	 *
 	 * @param genModel the {@link GenModel}
 	 */
 	protected final void setGenModel(final GenModel genModel) {
@@ -160,17 +165,17 @@ public class MoflonEmfCodeGenerator extends GenericMoflonProcess {
 
 	/**
 	 * Returns the {@link GenModel} configured with {@link #setGenModel(GenModel)}
-	 * 
+	 *
 	 * @return the {@link GenModel}
 	 */
 	public final GenModel getGenModel() {
-		return genModel;
+		return this.genModel;
 	}
 
 	/**
 	 * Reports a summary of the given exception in the returned status and the
 	 * stacktrace of the exception to the logger.
-	 * 
+	 *
 	 * @param exception the exception to report
 	 * @return the error status
 	 */
@@ -195,7 +200,8 @@ public class MoflonEmfCodeGenerator extends GenericMoflonProcess {
 	}
 
 	/**
-	 * Loads the injections from the /injection folder using the injection manager returned from {@link #getInjectorManager()}
+	 * Loads the injections from the /injection folder using the injection manager
+	 * returned from {@link #getInjectorManager()}
 	 */
 	protected IStatus createInjections(final IProject project) throws CoreException {
 		final IStatus extractionStatus = getInjectorManager().extractInjections();
@@ -205,29 +211,29 @@ public class MoflonEmfCodeGenerator extends GenericMoflonProcess {
 	/**
 	 * Creates the injection manager to be used for this build process
 	 *
-	 * The resulting injection manager still needs to be set using {@link #setInjectorManager(InjectionManager)}
+	 * The resulting injection manager still needs to be set using
+	 * {@link #setInjectorManager(InjectionManager)}
+	 *
 	 * @param project the current project
 	 * @return
 	 * @throws CoreException
 	 */
-	protected InjectionManager createInjectionManager(final IProject project)
-			throws CoreException {
+	protected InjectionManager createInjectionManager(final IProject project) throws CoreException {
 		final IFolder injectionFolder = WorkspaceHelper.addFolder(project, WorkspaceHelper.INJECTION_FOLDER,
 				new NullProgressMonitor());
 		final CodeInjector injector = new CodeInjectorImpl(project.getLocation().toOSString());
 
-		final InjectionExtractor injectionExtractor = new XTextInjectionExtractor(injectionFolder, this.getGenModel());
+		final InjectionExtractor injectionExtractor = new XTextInjectionExtractor(injectionFolder, getGenModel());
 
-		InjectionManager injectionManager = new InjectionManager(injectionExtractor, injector);
+		final InjectionManager injectionManager = new InjectionManager(injectionExtractor, injector);
 		return injectionManager;
 	}
-
 
 	protected void setInjectorManager(final InjectionManager injectionManager) {
 		this.injectionManager = injectionManager;
 	}
 
 	public final InjectionManager getInjectorManager() {
-		return injectionManager;
+		return this.injectionManager;
 	}
 }

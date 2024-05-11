@@ -4,6 +4,7 @@ import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.StringWriter;
+import java.nio.file.Files;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -20,7 +21,6 @@ import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathExpressionException;
 import javax.xml.xpath.XPathFactory;
 
-import org.apache.commons.io.FileUtils;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
@@ -78,10 +78,10 @@ public class XMLUtils {
 
 	public static Document parseXmlDocument(final String content) throws CoreException {
 		try {
-			DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+			final DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
 			factory.setIgnoringElementContentWhitespace(true);
-			DocumentBuilder builder = factory.newDocumentBuilder();
-			Document doc = builder.parse(new ByteArrayInputStream(content.getBytes()));
+			final DocumentBuilder builder = factory.newDocumentBuilder();
+			final Document doc = builder.parse(new ByteArrayInputStream(content.getBytes()));
 
 			XMLUtils.dropWhitespaceNodesFromTree(doc);
 
@@ -93,28 +93,28 @@ public class XMLUtils {
 	}
 
 	public static void dropWhitespaceNodesFromTree(final Document doc) throws XPathExpressionException {
-		XPath xp = XPathFactory.newInstance().newXPath();
-		NodeList nl = (NodeList) xp.evaluate("//text()[normalize-space(.)='']", doc, XPathConstants.NODESET);
+		final XPath xp = XPathFactory.newInstance().newXPath();
+		final NodeList nl = (NodeList) xp.evaluate("//text()[normalize-space(.)='']", doc, XPathConstants.NODESET);
 
 		for (int i = 0; i < nl.getLength(); ++i) {
-			Node node = nl.item(i);
+			final Node node = nl.item(i);
 			node.getParentNode().removeChild(node);
 		}
 	}
 
 	/**
 	 * Reads the contents of the given files into a {@link Document} instance.
-	 * 
+	 *
 	 * @param file
 	 *            the input file
 	 * @return the parsed document
 	 * @throws CoreException
-	 * 
+	 *
 	 * @throws IOException
 	 *             if a problem occurs while reading the file
 	 */
-	public static Document parseXmlDocument(File file) throws CoreException, IOException {
-		return parseXmlDocument(FileUtils.readFileToString(file));
+	public static Document parseXmlDocument(final File file) throws CoreException, IOException {
+		return parseXmlDocument(Files.readString(file.toPath()));
 	}
 
 }

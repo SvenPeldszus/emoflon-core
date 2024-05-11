@@ -4,12 +4,20 @@ package org.moflon.core.propertycontainer.util;
 
 import org.eclipse.emf.common.notify.Adapter;
 import org.eclipse.emf.common.notify.Notifier;
-
 import org.eclipse.emf.common.notify.impl.AdapterFactoryImpl;
-
 import org.eclipse.emf.ecore.EObject;
-
-import org.moflon.core.propertycontainer.*;
+import org.moflon.core.propertycontainer.AdditionalDependencies;
+import org.moflon.core.propertycontainer.AdditionalUsedGenPackages;
+import org.moflon.core.propertycontainer.Dependencies;
+import org.moflon.core.propertycontainer.FactoryMappings;
+import org.moflon.core.propertycontainer.ImportMappings;
+import org.moflon.core.propertycontainer.MetaModelProject;
+import org.moflon.core.propertycontainer.MoflonPropertiesContainer;
+import org.moflon.core.propertycontainer.PropertiesMapping;
+import org.moflon.core.propertycontainer.PropertiesValue;
+import org.moflon.core.propertycontainer.PropertycontainerPackage;
+import org.moflon.core.propertycontainer.ReplaceGenModel;
+import org.moflon.core.propertycontainer.TGGBuildMode;
 
 /**
  * <!-- begin-user-doc -->

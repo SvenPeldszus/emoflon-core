@@ -2,6 +2,7 @@ package org.moflon.core.ui.visualisation.common;
 
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.function.UnaryOperator;
 
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.jdt.core.dom.PrimitiveType.Code;

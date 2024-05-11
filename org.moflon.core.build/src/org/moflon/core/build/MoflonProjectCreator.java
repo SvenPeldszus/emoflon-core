@@ -35,9 +35,6 @@ import org.moflon.core.plugins.manifest.ManifestFileUpdater.AttributeUpdatePolic
 import org.moflon.core.plugins.manifest.PluginManifestConstants;
 import org.moflon.core.propertycontainer.MoflonPropertiesContainer;
 import org.moflon.core.propertycontainer.MoflonPropertiesContainerHelper;
-import org.moflon.core.propertycontainer.PropertycontainerFactory;
-import org.moflon.core.propertycontainer.SDMCodeGeneratorIds;
-import org.moflon.core.propertycontainer.SdmCodegeneratorMethodBodyHandler;
 import org.moflon.core.utilities.MoflonConventions;
 import org.moflon.core.utilities.WorkspaceHelper;
 
@@ -91,21 +88,21 @@ public abstract class MoflonProjectCreator extends WorkspaceTask implements Proj
 
 	@Override
 	public void run(final IProgressMonitor monitor) throws CoreException {
-		if (!project.exists()) {
-			final String projectName = pluginProperties.getProjectName();
+		if (!this.project.exists()) {
+			final String projectName = this.pluginProperties.getProjectName();
 			final SubMonitor subMon = SubMonitor.convert(monitor, "Creating project " + projectName, 13);
 
 			// (1) Create project
 			final IProjectDescription description = ResourcesPlugin.getWorkspace().newProjectDescription(projectName);
-			project.create(description, IWorkspace.AVOID_UPDATE, subMon.split(1));
-			project.open(IWorkspace.AVOID_UPDATE, subMon.split(1));
+			this.project.create(description, IWorkspace.AVOID_UPDATE, subMon.split(1));
+			this.project.open(IWorkspace.AVOID_UPDATE, subMon.split(1));
 
 			// (2) Configure natures and builders (.project file)
 			final JavaProjectConfigurator javaProjectConfigurator = new JavaProjectConfigurator();
 			final MoflonProjectConfigurator moflonProjectConfigurator = this.projectConfigurator;
 			final PluginProjectConfigurator pluginProjectConfigurator = new PluginProjectConfigurator();
 			final ProjectNatureAndBuilderConfiguratorTask natureAndBuilderConfiguratorTask = new ProjectNatureAndBuilderConfiguratorTask(
-					project, false);
+					this.project, false);
 			natureAndBuilderConfiguratorTask.updateNatureIDs(moflonProjectConfigurator, true);
 			natureAndBuilderConfiguratorTask.updateNatureIDs(javaProjectConfigurator, true);
 			natureAndBuilderConfiguratorTask.updateBuildSpecs(javaProjectConfigurator, true);
@@ -116,29 +113,29 @@ public abstract class MoflonProjectCreator extends WorkspaceTask implements Proj
 					subMon.split(1));
 
 			// (3) Create folders and files in project
-			createFoldersIfNecessary(project, subMon.split(4));
-			addGitignoreFile(project, subMon.split(2));
-			addGitKeepFiles(project, subMon.split(2));
+			createFoldersIfNecessary(this.project, subMon.split(4));
+			addGitignoreFile(this.project, subMon.split(2));
+			addGitKeepFiles(this.project, subMon.split(2));
 
 			// (4) Create MANIFEST.MF file
 			createManifestFile();
 
 			// (5) Create build.properties file
-			new BuildPropertiesFileBuilder().createBuildProperties(project, subMon.split(1));
+			new BuildPropertiesFileBuilder().createBuildProperties(this.project, subMon.split(1));
 
 			// (6) Configure Java settings (.classpath file)
-			final IJavaProject javaProject = JavaCore.create(project);
+			final IJavaProject javaProject = JavaCore.create(this.project);
 			final IClasspathEntry srcFolderEntry = JavaCore
-					.newSourceEntry(WorkspaceHelper.getSourceFolder(project).getFullPath());
+					.newSourceEntry(WorkspaceHelper.getSourceFolder(this.project).getFullPath());
 
 			// Integration projects contain a lot of (useful?) boilerplate code in /gen,
 			// which requires to ignore warnings such as 'unused variable', 'unused import'
 			// etc.
 			final IClasspathAttribute[] genFolderClasspathAttributes = shallIgnoreGenWarnings()
 					? new IClasspathAttribute[] { JavaCore.newClasspathAttribute("ignore_optional_problems", "true") }
-					: new IClasspathAttribute[] {};
+			: new IClasspathAttribute[] {};
 			final IClasspathEntry genFolderEntry = JavaCore.newSourceEntry(
-					WorkspaceHelper.getGenFolder(project).getFullPath(), new IPath[0], new IPath[0], null,
+					WorkspaceHelper.getGenFolder(this.project).getFullPath(), new IPath[0], new IPath[0], null,
 					genFolderClasspathAttributes);
 			final IClasspathEntry jreContainerEntry = JavaCore
 					.newContainerEntry(new Path("org.eclipse.jdt.launching.JRE_CONTAINER"));
@@ -147,7 +144,7 @@ public abstract class MoflonProjectCreator extends WorkspaceTask implements Proj
 			javaProject.setRawClasspath(
 					new IClasspathEntry[] { srcFolderEntry, genFolderEntry, jreContainerEntry,
 							pdeContainerEntry },
-					WorkspaceHelper.getBinFolder(project).getFullPath(), true, subMon.split(1));
+					WorkspaceHelper.getBinFolder(this.project).getFullPath(), true, subMon.split(1));
 
 			// (7) Create Moflon properties file (moflon.properties.xmi)
 			final MoflonPropertiesContainer moflonProperties = MoflonPropertiesContainerHelper
@@ -159,17 +156,17 @@ public abstract class MoflonProjectCreator extends WorkspaceTask implements Proj
 
 	/**
 	 * Initializes the Manifest.MF file
-	 * 
+	 *
 	 * @throws CoreException
 	 *                           if an error occurs
 	 */
 	private void createManifestFile() throws CoreException {
 		validatePluginProperties();
 
-		new ManifestFileUpdater().processManifest(project, manifest -> {
+		new ManifestFileUpdater().processManifest(this.project, manifest -> {
 			boolean changed = false;
-			final String name = pluginProperties.get(PluginProperties.NAME_KEY);
-			final String pluginId = pluginProperties.get(PluginProperties.PLUGIN_ID_KEY);
+			final String name = this.pluginProperties.get(PluginProperties.NAME_KEY);
+			final String pluginId = this.pluginProperties.get(PluginProperties.PLUGIN_ID_KEY);
 			changed |= ManifestFileUpdater.updateAttribute(manifest, PluginManifestConstants.MANIFEST_VERSION, "1.0",
 					AttributeUpdatePolicy.KEEP);
 			changed |= ManifestFileUpdater.updateAttribute(manifest, PluginManifestConstants.BUNDLE_MANIFEST_VERSION,
@@ -186,8 +183,8 @@ public abstract class MoflonProjectCreator extends WorkspaceTask implements Proj
 					"lazy", AttributeUpdatePolicy.KEEP);
 			changed |= ManifestFileUpdater.updateAttribute(manifest,
 					PluginManifestConstants.BUNDLE_EXECUTION_ENVIRONMENT, "JavaSE-1.8", AttributeUpdatePolicy.KEEP);
-//			changed |= ManifestFileUpdater.updateAttribute(manifest, PluginManifestConstants.AUTOMATIC_MODULE_NAME,
-//					pluginId, AttributeUpdatePolicy.KEEP);
+			//			changed |= ManifestFileUpdater.updateAttribute(manifest, PluginManifestConstants.AUTOMATIC_MODULE_NAME,
+			//					pluginId, AttributeUpdatePolicy.KEEP);
 			return changed;
 		});
 	}
@@ -199,7 +196,7 @@ public abstract class MoflonProjectCreator extends WorkspaceTask implements Proj
 	 * @return the handle to the project to create
 	 */
 	public final IProject getProject() {
-		return project;
+		return this.project;
 	}
 
 	/**
@@ -208,7 +205,7 @@ public abstract class MoflonProjectCreator extends WorkspaceTask implements Proj
 	 * @return the plugin properties
 	 */
 	public PluginProperties getPluginProperties() {
-		return pluginProperties;
+		return this.pluginProperties;
 	}
 
 	/**
@@ -234,9 +231,10 @@ public abstract class MoflonProjectCreator extends WorkspaceTask implements Proj
 	 *                           given properties
 	 */
 	private void validateNotNull(final PluginProperties pluginProperties, final String key) throws CoreException {
-		if (!pluginProperties.containsKey(key))
+		if (!pluginProperties.containsKey(key)) {
 			throw new CoreException(new Status(IStatus.ERROR, WorkspaceHelper.getPluginId(getClass()),
 					String.format("Key %s not found in %s", key, pluginProperties)));
+		}
 	}
 
 	/**
@@ -349,38 +347,5 @@ public abstract class MoflonProjectCreator extends WorkspaceTask implements Proj
 			}
 		}
 		return buildSpecs;
-	}
-
-	/**
-	 * Returns the method body code generator to use.
-	 *
-	 * @return the code generator ID to use. May be <code>null</code>.
-	 */
-	protected abstract SDMCodeGeneratorIds getCodeGeneratorHandler();
-	
-	/**
-	 * Initializes the contents of the file
-	 * {@link MoflonConventions#MOFLON_CONFIG_FILE}.
-	 *
-	 * The file will be saved after calling this method.
-	 *
-	 * This method initializes
-	 * {@link MoflonPropertiesContainer#getSdmCodegeneratorHandlerId()} based on
-	 * {@link #getCodeGeneratorHandler()}
-	 *
-	 * When overriding this method, subclasses should invoke the parent class's
-	 * {@link #initializeMoflonProperties(MoflonPropertiesContainer)} in any case!
-	 *
-	 * @param moflonProperties
-	 *            the properties container
-	 */
-	protected void initializeMoflonProperties(final MoflonPropertiesContainer moflonProperties) {
-		final SDMCodeGeneratorIds codeGeneratorHandler = getCodeGeneratorHandler();
-		if (codeGeneratorHandler != null) {
-			final SdmCodegeneratorMethodBodyHandler methodBodyHandlerId = PropertycontainerFactory.eINSTANCE
-					.createSdmCodegeneratorMethodBodyHandler();
-			moflonProperties.setSdmCodegeneratorHandlerId(methodBodyHandlerId);
-			methodBodyHandlerId.setValue(codeGeneratorHandler);
-		}
 	}
 }

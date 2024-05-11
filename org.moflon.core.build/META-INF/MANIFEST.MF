@@ -3,7 +3,7 @@ Bundle-ManifestVersion: 2
 Bundle-Name: eMoflon::Core build components for Eclipse
 Bundle-SymbolicName: org.moflon.core.build
 Bundle-Version: 1.1.0.qualifier
-Bundle-RequiredExecutionEnvironment: JavaSE-1.8
+Bundle-RequiredExecutionEnvironment: JavaSE-17
 Bundle-Vendor: eMoflon developers
 Require-Bundle: org.moflon.core.utilities,
  org.moflon.core.propertycontainer,
@@ -12,9 +12,7 @@ Require-Bundle: org.moflon.core.utilities,
  org.eclipse.core.runtime,
  org.eclipse.emf.ecore,
  org.eclipse.jdt.core,
- org.gervarro.eclipse.workspace.util,
- org.gervarro.eclipse.task,
- org.gervarro.eclipse.workspace.autosetup;visibility:=reexport
+ org.gervarro.eclipse.workspace.util
 Export-Package: org.moflon.core.build,
  org.moflon.core.build.nature
 Automatic-Module-Name: org.moflon.core.build
